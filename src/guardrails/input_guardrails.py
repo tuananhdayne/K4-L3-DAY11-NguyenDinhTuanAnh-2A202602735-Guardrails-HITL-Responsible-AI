@@ -95,6 +95,11 @@ def detect_injection(user_input: str) -> InputStatus:
 # Return ``"ALLOW"`` if banking-related and OK.
 # ============================================================
 
+def _remove_accents(text: str) -> str:
+    t = text.replace("đ", "d").replace("Đ", "D")
+    return "".join(c for c in unicodedata.normalize("NFD", t) if unicodedata.category(c) != "Mn")
+
+
 def topic_filter(user_input: str) -> InputStatus:
     """Decide whether the input is on-topic for VinBank.
 
@@ -106,11 +111,12 @@ def topic_filter(user_input: str) -> InputStatus:
         ``"ALLOW"`` = cho qua (câu banking hợp lệ).
     """
     input_lower = _normalize_text(user_input).lower()
+    input_no_accent = _remove_accents(input_lower)
 
-    if any(b in input_lower for b in BLOCKED_TOPICS):
+    if any(b in input_lower or b in input_no_accent for b in BLOCKED_TOPICS):
         return "BLOCK"
 
-    if any(a in input_lower for a in ALLOWED_TOPICS):
+    if any(a in input_lower or a in input_no_accent for a in ALLOWED_TOPICS):
         return "ALLOW"
 
     return "BLOCK"
